@@ -1,4 +1,4 @@
-import Dexie, { Table } from 'dexie';
+import Dexie, { Table } from "dexie";
 
 export interface Product {
   id?: number;
@@ -7,7 +7,7 @@ export interface Product {
   price: number;
   category: string;
   image: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,10 +24,10 @@ export class BekasBerkahDB extends Dexie {
   categories!: Table<Category>;
 
   constructor() {
-    super('BekasBerkahDB');
+    super("BekasBerkahDB");
     this.version(1).stores({
-      products: '++id, name, category, status, createdAt, updatedAt',
-      categories: '++id, name, createdAt'
+      products: "++id, name, category, status, createdAt, updatedAt",
+      categories: "++id, name, createdAt",
     });
   }
 }

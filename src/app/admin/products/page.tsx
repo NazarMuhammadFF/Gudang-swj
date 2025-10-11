@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -18,19 +18,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { db, Product, Category } from '@/lib/database';
+} from "@/components/ui/select";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { db, Product, Category } from "@/lib/database";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -38,12 +38,12 @@ export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    image: '',
-    status: 'active' as 'active' | 'inactive',
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    image: "",
+    status: "active" as "active" | "inactive",
   });
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const productData: Omit<Product, 'id'> = {
+    const productData: Omit<Product, "id"> = {
       name: formData.name,
       description: formData.description,
       price: parseFloat(formData.price),
@@ -100,7 +100,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this product?')) {
+    if (confirm("Are you sure you want to delete this product?")) {
       await db.products.delete(id);
       await loadProducts();
     }
@@ -108,12 +108,12 @@ export default function ProductsPage() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
-      price: '',
-      category: '',
-      image: '',
-      status: 'active',
+      name: "",
+      description: "",
+      price: "",
+      category: "",
+      image: "",
+      status: "active",
     });
     setEditingProduct(null);
   };
@@ -127,7 +127,9 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Product Management
+          </h1>
           <Button onClick={openAddDialog}>
             <Plus className="mr-2 h-4 w-4" />
             Add Product
@@ -156,11 +158,13 @@ export default function ProductsPage() {
                     <TableCell>{product.category}</TableCell>
                     <TableCell>Rp {product.price.toLocaleString()}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        product.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          product.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
                         {product.status}
                       </span>
                     </TableCell>
@@ -200,12 +204,12 @@ export default function ProductsPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
+                {editingProduct ? "Edit Product" : "Add New Product"}
               </DialogTitle>
               <DialogDescription>
                 {editingProduct
-                  ? 'Update the product information below.'
-                  : 'Fill in the details to add a new product.'}
+                  ? "Update the product information below."
+                  : "Fill in the details to add a new product."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
@@ -217,7 +221,9 @@ export default function ProductsPage() {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -229,7 +235,9 @@ export default function ProductsPage() {
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -242,7 +250,9 @@ export default function ProductsPage() {
                     id="price"
                     type="number"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -253,7 +263,9 @@ export default function ProductsPage() {
                   </Label>
                   <Select
                     value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select category" />
@@ -274,7 +286,9 @@ export default function ProductsPage() {
                   <Input
                     id="image"
                     value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, image: e.target.value })
+                    }
                     className="col-span-3"
                   />
                 </div>
@@ -284,7 +298,9 @@ export default function ProductsPage() {
                   </Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value: 'active' | 'inactive') => setFormData({ ...formData, status: value })}
+                    onValueChange={(value: "active" | "inactive") =>
+                      setFormData({ ...formData, status: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue />
@@ -298,7 +314,7 @@ export default function ProductsPage() {
               </div>
               <DialogFooter>
                 <Button type="submit">
-                  {editingProduct ? 'Update Product' : 'Add Product'}
+                  {editingProduct ? "Update Product" : "Add Product"}
                 </Button>
               </DialogFooter>
             </form>

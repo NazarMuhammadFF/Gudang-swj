@@ -1,36 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BekasBerkah - E-commerce Template for Second-Hand Goods
 
-## Getting Started
+**Version 1.0.0** | A modern, functional demo e-commerce platform for buying and selling curated second-hand goods.
 
-First, run the development server:
+## 🎯 Project Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+BekasBerkah is a fully functional e-commerce template that demonstrates a complete workflow for a second-hand goods marketplace with centralized curation. This project serves as a showcase for developers and potential clients, featuring both admin and user-facing interfaces.
+
+### Key Features
+
+- **Admin Dashboard**: Comprehensive product, category, order, and submission management
+- **User Storefront**: Product browsing, search/filter, shopping cart, and checkout
+- **Seller Portal**: Simple item submission process with tracking
+- **Local Storage**: Client-side data persistence using IndexedDB (Dexie.js)
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Modern Stack**: Built with Next.js 15, TypeScript, and Shadcn/ui
+
+## 🚀 Tech Stack
+
+| Category | Technology | Purpose |
+|----------|-----------|---------|
+| Framework | Next.js 15 (App Router) | React framework with server components |
+| Language | TypeScript | Type-safe development |
+| Database | Dexie.js (IndexedDB) | Client-side local storage |
+| Styling | Tailwind CSS | Utility-first CSS framework |
+| UI Components | Shadcn/ui | Beautiful, accessible components |
+| Icons | Lucide React | Icon library |
+| Forms | React Hook Form + Zod | Form handling and validation |
+| Package Manager | Bun | Fast JavaScript runtime and package manager |
+
+## 📦 Installation
+
+### Prerequisites
+
+- Node.js 18+ or Bun 1.0+
+- Git
+
+### Setup Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/NazarMuhammadFF/Gudang-swj.git
+   cd Gudang-swj
+   ```
+
+2. **Install dependencies**
+   ```bash
+   bun install
+   ```
+
+3. **Run development server**
+   ```bash
+   bun run dev
+   ```
+
+4. **Open in browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🏗️ Project Structure
+
+```
+gudang-swj/
+├── .github/
+│   └── copilot-instructions.md  # AI coding assistant guidelines
+├── doc/
+│   ├── prd.md                   # Product Requirements Document
+│   ├── plan.md                  # Development plan
+│   └── todo.md                  # Detailed task breakdown
+├── src/
+│   ├── app/                     # Next.js app router pages
+│   │   ├── admin/              # Admin panel pages
+│   │   │   ├── page.tsx        # Admin dashboard
+│   │   │   └── products/       # Product management
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── page.tsx            # Homepage
+│   │   └── globals.css         # Global styles
+│   ├── components/
+│   │   └── ui/                 # Shadcn/ui components
+│   └── lib/
+│       ├── database.ts         # Dexie database schema
+│       └── utils.ts            # Utility functions
+├── public/                      # Static assets
+├── components.json              # Shadcn/ui configuration
+├── package.json                 # Dependencies
+├── tsconfig.json               # TypeScript configuration
+└── README.md                   # This file
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Available Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Development
+bun run dev          # Start development server with Turbopack
+bun run build        # Build for production
+bun run start        # Start production server
+bun run lint         # Run ESLint
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Shadcn/ui Components
+bunx shadcn@latest add <component-name>  # Add new UI component
+```
 
-## Learn More
+## 🎨 Adding Shadcn/ui Components
 
-To learn more about Next.js, take a look at the following resources:
+To add a new Shadcn/ui component:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+bunx shadcn@latest add button
+bunx shadcn@latest add card
+bunx shadcn@latest add dialog
+# etc.
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Components are automatically added to `src/components/ui/`
 
-## Deploy on Vercel
+## 📋 Development Workflow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project follows a structured development workflow:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Main Branch**: `main` - Production-ready code
+2. **Development Branch**: `dev` - Main working branch
+3. **Feature Branches**: `feature/<feature-name>` - Individual features
+
+### Branch Workflow
+
+```bash
+# Start from dev branch
+git checkout dev
+
+# Create feature branch
+git checkout -b feature/category-management
+
+# After completion and approval, merge to dev
+git checkout dev
+git merge feature/category-management
+
+# Deploy to main when ready
+git checkout main
+git merge dev
+```
+
+## 🗄️ Database Schema
+
+The application uses Dexie.js for local IndexedDB storage:
+
+### Tables
+
+- **products**: Product catalog (id, name, description, price, category, image, status, timestamps)
+- **categories**: Product categories (id, name, description, timestamp)
+- **submissions**: Seller submissions (pending implementation)
+- **orders**: Customer orders (pending implementation)
+
+## 📱 Features Roadmap
+
+### Phase 1: Admin Module (In Progress)
+- [x] Admin Dashboard with overview widgets
+- [x] Product Management (CRUD)
+- [ ] Category Management (CRUD)
+- [ ] Submission Review Interface
+- [ ] Order Management
+
+### Phase 2: User Storefront (Planned)
+- [ ] Product Gallery & Listing
+- [ ] Product Detail Pages
+- [ ] Search & Filter
+- [ ] Shopping Cart
+- [ ] Checkout Process
+- [ ] Seller Submission Form
+- [ ] User Account Page
+
+### Phase 3: Polish & Testing (Planned)
+- [ ] Mock Data Population
+- [ ] Responsive Design Testing
+- [ ] End-to-End User Journey Testing
+- [ ] Performance Optimization
+- [ ] Deployment to Vercel
+
+## 🤝 Contributing
+
+This is a demo project. For development guidelines, see:
+- [Product Requirements](./doc/prd.md)
+- [Development Plan](./doc/plan.md)
+- [Task Breakdown](./doc/todo.md)
+- [Copilot Instructions](./.github/copilot-instructions.md)
+
+## 📄 License
+
+This project is for demonstration purposes.
+
+## 🔗 Links
+
+- **Repository**: [https://github.com/NazarMuhammadFF/Gudang-swj](https://github.com/NazarMuhammadFF/Gudang-swj)
+- **Documentation**: See `doc/` folder for detailed documentation
+
+---
+
+**Built with ❤️ using Next.js, TypeScript, and Tailwind CSS**
