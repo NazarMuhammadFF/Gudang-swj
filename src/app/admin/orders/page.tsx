@@ -1,51 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { PackageCheck, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  ArrowUpDown,
+  MoreHorizontal,
+  Package,
+  Truck,
+  CheckCircle2,
+  XCircle,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { db, Order, OrderStatus } from "@/lib/database";
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "Menunggu Pembayaran",
-  processing: "Sedang Diproses",
-  shipped: "Dikirim",
-  delivered: "Selesai",
-  cancelled: "Dibatalkan",
-};
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -54,77 +32,252 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const statusConfig: Record<
+  OrderStatus,
+  { label: string; className: string; icon: React.ReactNode }
+> = {
+  pending: {
+    label: "Pending",
+    className: "bg-amber-100 text-amber-700",
+    icon: <Clock className="mr-1 h-3 w-3" />,
+  },
+  processing: {
+    label: "Diproses",
+    className: "bg-sky-100 text-sky-700",
+    icon: <Package className="mr-1 h-3 w-3" />,
+  },
+  shipped: {
+    label: "Dikirim",
+    className: "bg-indigo-100 text-indigo-700",
+    icon: <Truck className="mr-1 h-3 w-3" />,
+  },
+  delivered: {
+    label: "Selesai",
+    className: "bg-emerald-100 text-emerald-700",
+    icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
+  },
+  cancelled: {
+    label: "Dibatalkan",
+    className: "bg-neutral-200 text-neutral-600",
+    icon: <XCircle className="mr-1 h-3 w-3" />,
+  },
+};
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    orderNumber: "",
-    customerName: "",
-    email: "",
-    total: "",
-    status: "pending" as OrderStatus,
-    itemsDescription: "",
-  });
 
   const loadOrders = useCallback(async () => {
-    const orderList = await db.orders.orderBy("createdAt").reverse().toArray();
-    setOrders(orderList);
+    const allOrders = await db.orders.orderBy("createdAt").reverse().toArray();
+    setOrders(allOrders);
   }, []);
 
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!formData.orderNumber.trim()) {
-      return;
-    }
-
-    await db.orders.add({
-      orderNumber: formData.orderNumber,
-      customerName: formData.customerName,
-      email: formData.email,
-      total: Number(formData.total) || 0,
-      status: formData.status,
-      itemsDescription: formData.itemsDescription,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    await loadOrders();
-    resetForm();
-    setIsDialogOpen(false);
-  };
-
-  const handleStatusChange = async (order: Order, status: OrderStatus) => {
-    await db.orders.update(order.id!, {
+  const handleStatusUpdate = async (id: number, status: OrderStatus) => {
+    await db.orders.update(id, {
       status,
       updatedAt: new Date(),
     });
     await loadOrders();
   };
 
-  const handleDelete = async (order: Order) => {
-    if (confirm(`Hapus pesanan #${order.orderNumber}?`)) {
-      await db.orders.delete(order.id!);
-      await loadOrders();
-    }
-  };
+  const columns: ColumnDef<Order>[] = [
+    {
+      accessorKey: "orderNumber",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            No. Order
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return (
+          <div className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+            #{row.getValue("orderNumber")}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "customerName",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Pelanggan
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return (
+          <div>
+            <div className="font-medium">{row.getValue("customerName")}</div>
+            <div className="text-xs text-neutral-500">{row.original.email}</div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "itemsDescription",
+      header: "Item",
+      cell: ({ row }) => {
+        return (
+          <div className="line-clamp-2 max-w-xs text-sm text-neutral-600">
+            {row.getValue("itemsDescription")}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "total",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Total
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const total = parseFloat(row.getValue("total"));
+        return (
+          <div className="font-semibold text-neutral-900 dark:text-neutral-100">
+            {formatCurrency(total)}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Status
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const status = row.getValue("status") as OrderStatus;
+        const config = statusConfig[status];
+        return (
+          <Badge className={config.className}>
+            {config.icon}
+            {config.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Tanggal
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const date = row.getValue("createdAt") as Date;
+        return (
+          <div className="text-sm text-neutral-600">
+            {new Date(date).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const order = row.original;
+        const isCompleted =
+          order.status === "delivered" || order.status === "cancelled";
 
-  const resetForm = () => {
-    setFormData({
-      orderNumber: "",
-      customerName: "",
-      email: "",
-      total: "",
-      status: "pending",
-      itemsDescription: "",
-    });
-  };
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Buka menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleStatusUpdate(order.id!, "processing")}
+                disabled={isCompleted || order.status === "processing"}
+              >
+                <Package className="mr-2 h-4 w-4 text-sky-600" />
+                Proses
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusUpdate(order.id!, "shipped")}
+                disabled={
+                  isCompleted ||
+                  order.status === "shipped" ||
+                  order.status === "pending"
+                }
+              >
+                <Truck className="mr-2 h-4 w-4 text-indigo-600" />
+                Kirim
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusUpdate(order.id!, "delivered")}
+                disabled={isCompleted || order.status !== "shipped"}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" />
+                Selesai
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleStatusUpdate(order.id!, "cancelled")}
+                disabled={isCompleted}
+                className="text-red-600"
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Batalkan
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
-  const emptyState = useMemo(() => orders.length === 0, [orders.length]);
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const processingCount = orders.filter((o) => o.status === "processing").length;
+  const shippedCount = orders.filter((o) => o.status === "shipped").length;
+  const deliveredCount = orders.filter((o) => o.status === "delivered").length;
+
+  const totalRevenue = orders
+    .filter((o) => o.status === "delivered")
+    .reduce((sum, order) => sum + order.total, 0);
 
   return (
     <div className="space-y-6">
@@ -134,270 +287,77 @@ export default function OrdersPage() {
             Manajemen Pesanan
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 md:text-sm">
-            Pantau setiap tahapan pesanan mulai dari pembayaran hingga
-            pengiriman.
+            Pantau dan kelola status pemesanan pelanggan.
           </p>
         </div>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="w-full md:w-auto"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Catat Pesanan
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline" className="bg-amber-50 text-amber-700">
+            <Clock className="mr-1 h-3 w-3" />
+            {pendingCount} Pending
+          </Badge>
+          <Badge variant="outline" className="bg-sky-50 text-sky-700">
+            <Package className="mr-1 h-3 w-3" />
+            {processingCount} Proses
+          </Badge>
+          <Badge variant="outline" className="bg-indigo-50 text-indigo-700">
+            <Truck className="mr-1 h-3 w-3" />
+            {shippedCount} Kirim
+          </Badge>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            {deliveredCount} Selesai
+          </Badge>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-500">
+              Total Pesanan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{orders.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-500">
+              Pesanan Aktif
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {pendingCount + processingCount + shippedCount}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-500">
+              Total Pendapatan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-xl md:text-2xl">Daftar Pesanan</CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            {emptyState
-              ? "Belum ada pesanan yang tercatat."
-              : "Perbarui status pesanan untuk menjaga transparansi pelanggan."}
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[120px]">Nomor Pesanan</TableHead>
-                  <TableHead className="min-w-[150px]">Pelanggan</TableHead>
-                  <TableHead className="min-w-[120px]">Status</TableHead>
-                  <TableHead className="hidden min-w-[180px] lg:table-cell">
-                    Catatan Item
-                  </TableHead>
-                  <TableHead className="hidden min-w-[100px] sm:table-cell">
-                    Tanggal
-                  </TableHead>
-                  <TableHead className="min-w-[100px] text-right">
-                    Nilai
-                  </TableHead>
-                  <TableHead className="min-w-[180px] text-right">
-                    Aksi
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {emptyState && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-8 text-center text-xs text-neutral-500 sm:text-sm"
-                    >
-                      Belum ada data pesanan.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">
-                      <span className="truncate">#{order.orderNumber}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="truncate">{order.customerName}</p>
-                        <p className="truncate text-xs text-neutral-500">
-                          {order.email || "-"}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-sky-100 text-sky-700">
-                        {STATUS_LABELS[order.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-neutral-500 lg:table-cell">
-                      <span className="line-clamp-2">
-                        {order.itemsDescription || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-neutral-500 sm:table-cell">
-                      {new Date(order.createdAt).toLocaleDateString("id-ID")}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(order.total)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Select
-                          value={order.status}
-                          onValueChange={(value: OrderStatus) =>
-                            void handleStatusChange(order, value)
-                          }
-                        >
-                          <SelectTrigger className="w-[100px] sm:w-[140px]">
-                            <SelectValue placeholder="Ubah status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">
-                              Menunggu Pembayaran
-                            </SelectItem>
-                            <SelectItem value="processing">
-                              Sedang Diproses
-                            </SelectItem>
-                            <SelectItem value="shipped">Dikirim</SelectItem>
-                            <SelectItem value="delivered">Selesai</SelectItem>
-                            <SelectItem value="cancelled">
-                              Dibatalkan
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(order)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={columns}
+            data={orders}
+            searchKey="orderNumber"
+            searchPlaceholder="Cari nomor order atau pelanggan..."
+          />
         </CardContent>
       </Card>
-
-      <Dialog
-        open={isDialogOpen}
-        onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            resetForm();
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>Catat Pesanan Manual</DialogTitle>
-            <DialogDescription>
-              Simulasikan pesanan untuk mendemonstrasikan alur pemrosesan admin.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="orderNumber">Nomor Pesanan</Label>
-                <Input
-                  id="orderNumber"
-                  value={formData.orderNumber}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      orderNumber: event.target.value,
-                    }))
-                  }
-                  placeholder="INV-2025-001"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total">Total Pembayaran</Label>
-                <Input
-                  id="total"
-                  type="number"
-                  min="0"
-                  value={formData.total}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      total: event.target.value,
-                    }))
-                  }
-                  placeholder="1500000"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Nama Pelanggan</Label>
-                <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      customerName: event.target.value,
-                    }))
-                  }
-                  placeholder="Contoh: Budi Santoso"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      email: event.target.value,
-                    }))
-                  }
-                  placeholder="pelanggan@mail.com"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status Pesanan</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: OrderStatus) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    status: value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Menunggu Pembayaran</SelectItem>
-                  <SelectItem value="processing">Sedang Diproses</SelectItem>
-                  <SelectItem value="shipped">Dikirim</SelectItem>
-                  <SelectItem value="delivered">Selesai</SelectItem>
-                  <SelectItem value="cancelled">Dibatalkan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="itemsDescription">Detail Item</Label>
-              <Textarea
-                id="itemsDescription"
-                rows={4}
-                value={formData.itemsDescription}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    itemsDescription: event.target.value,
-                  }))
-                }
-                placeholder="Contoh: 1x Sofa Minimalis, 2x Bantal Dekorasi"
-              />
-            </div>
-            <DialogFooter className="gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  resetForm();
-                  setIsDialogOpen(false);
-                }}
-              >
-                Batal
-              </Button>
-              <Button type="submit" className="gap-2">
-                <PackageCheck className="h-4 w-4" /> Simpan Pesanan
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
