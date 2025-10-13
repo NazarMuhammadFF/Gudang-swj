@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BekasBerkah - Platform Jual Beli Barang Bekas Terpercaya",
-  description: "Template e-commerce modern untuk jual beli barang bekas dengan kurasi terpusat. Demo fungsional dengan Next.js, TypeScript, dan Dexie.js",
+  description:
+    "Template e-commerce modern untuk jual beli barang bekas dengan kurasi terpusat. Demo fungsional dengan Next.js, TypeScript, dan Dexie.js",
 };
 
 export default function RootLayout({

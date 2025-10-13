@@ -17,16 +17,16 @@ BekasBerkah is a fully functional e-commerce template that demonstrates a comple
 
 ## 🚀 Tech Stack
 
-| Category | Technology | Purpose |
-|----------|-----------|---------|
-| Framework | Next.js 15 (App Router) | React framework with server components |
-| Language | TypeScript | Type-safe development |
-| Database | Dexie.js (IndexedDB) | Client-side local storage |
-| Styling | Tailwind CSS | Utility-first CSS framework |
-| UI Components | Shadcn/ui | Beautiful, accessible components |
-| Icons | Lucide React | Icon library |
-| Forms | React Hook Form + Zod | Form handling and validation |
-| Package Manager | Bun | Fast JavaScript runtime and package manager |
+| Category        | Technology              | Purpose                                     |
+| --------------- | ----------------------- | ------------------------------------------- |
+| Framework       | Next.js 15 (App Router) | React framework with server components      |
+| Language        | TypeScript              | Type-safe development                       |
+| Database        | Dexie.js (IndexedDB)    | Client-side local storage                   |
+| Styling         | Tailwind CSS            | Utility-first CSS framework                 |
+| UI Components   | Shadcn/ui               | Beautiful, accessible components            |
+| Icons           | Lucide React            | Icon library                                |
+| Forms           | React Hook Form + Zod   | Form handling and validation                |
+| Package Manager | Bun                     | Fast JavaScript runtime and package manager |
 
 ## 📦 Installation
 
@@ -38,17 +38,20 @@ BekasBerkah is a fully functional e-commerce template that demonstrates a comple
 ### Setup Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/NazarMuhammadFF/Gudang-swj.git
    cd Gudang-swj
    ```
 
 2. **Install dependencies**
+
    ```bash
    bun install
    ```
 
 3. **Run development server**
+
    ```bash
    bun run dev
    ```
@@ -152,6 +155,7 @@ The application uses Dexie.js for local IndexedDB storage:
 ## 📱 Features Roadmap
 
 ### Phase 1: Admin Module (In Progress)
+
 - [x] Admin Dashboard with overview widgets
 - [x] Product Management (CRUD)
 - [ ] Category Management (CRUD)
@@ -159,6 +163,7 @@ The application uses Dexie.js for local IndexedDB storage:
 - [ ] Order Management
 
 ### Phase 2: User Storefront (Planned)
+
 - [ ] Product Gallery & Listing
 - [ ] Product Detail Pages
 - [ ] Search & Filter
@@ -168,6 +173,7 @@ The application uses Dexie.js for local IndexedDB storage:
 - [ ] User Account Page
 
 ### Phase 3: Polish & Testing (Planned)
+
 - [ ] Mock Data Population
 - [ ] Responsive Design Testing
 - [ ] End-to-End User Journey Testing
@@ -177,6 +183,7 @@ The application uses Dexie.js for local IndexedDB storage:
 ## 🤝 Contributing
 
 This is a demo project. For development guidelines, see:
+
 - [Product Requirements](./doc/prd.md)
 - [Development Plan](./doc/plan.md)
 - [Task Breakdown](./doc/todo.md)

@@ -73,8 +73,7 @@ export class BekasBerkahDB extends Dexie {
       categories: "++id, name, createdAt",
       submissions:
         "++id, status, createdAt, updatedAt, sellerName, productName, category",
-      orders:
-        "++id, orderNumber, status, customerName, createdAt, updatedAt",
+      orders: "++id, orderNumber, status, customerName, createdAt, updatedAt",
     });
   }
 }
