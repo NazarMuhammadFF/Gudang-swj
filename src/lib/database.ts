@@ -1,4 +1,4 @@
-import Dexie, { Table } from "dexie";
+import Dexie, { type Table } from "dexie";
 
 export interface Product {
   id?: number;
@@ -78,4 +78,5 @@ export class BekasBerkahDB extends Dexie {
   }
 }
 
-export const db = new BekasBerkahDB();
+// Only instantiate the database on the client side
+export const db = typeof window !== "undefined" ? new BekasBerkahDB() : ({} as BekasBerkahDB);

@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, MoreHorizontal, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -29,8 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { db, Product, Category } from "@/lib/database";
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,7 +110,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this product?")) {
+    if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
       await db.products.delete(id);
       await loadProducts();
     }
@@ -123,12 +133,122 @@ export default function ProductsPage() {
     setIsDialogOpen(true);
   };
 
+  const columns: ColumnDef<Product>[] = [
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Nama Produk
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return (
+          <div className="font-medium">
+            <div className="line-clamp-2">{row.getValue("name")}</div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Kategori
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return <div className="truncate">{row.getValue("category") || "-"}</div>;
+      },
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Harga
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const price = parseFloat(row.getValue("price"));
+        return <div className="font-medium">{formatCurrency(price)}</div>;
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge
+            className={
+              status === "active"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-neutral-100 text-neutral-600"
+            }
+          >
+            {status === "active" ? "Aktif" : "Non-aktif"}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const product = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Buka menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleEdit(product)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDelete(product.id!)}
+                className="text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Hapus
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 md:text-2xl">
-            Product Management
+            Manajemen Produk
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 md:text-sm">
             Kelola semua produk yang tersedia di etalase Anda.
@@ -136,85 +256,21 @@ export default function ProductsPage() {
         </div>
         <Button onClick={openAddDialog} className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          Add Product
+          Tambah Produk
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl md:text-2xl">Products</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Daftar Produk</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[150px]">Name</TableHead>
-                  <TableHead className="min-w-[100px]">Category</TableHead>
-                  <TableHead className="min-w-[100px]">Price</TableHead>
-                  <TableHead className="hidden min-w-[80px] sm:table-cell">
-                    Status
-                  </TableHead>
-                  <TableHead className="min-w-[120px] text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">
-                      <span className="line-clamp-2">{product.name}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="truncate">{product.category}</span>
-                    </TableCell>
-                    <TableCell>Rp {product.price.toLocaleString()}</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          product.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {product.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(product.id!)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {products.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-xs sm:text-sm"
-                    >
-                      No products found. Add your first product!
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={columns}
+            data={products}
+            searchKey="name"
+            searchPlaceholder="Cari produk..."
+          />
         </CardContent>
       </Card>
 
@@ -222,19 +278,19 @@ export default function ProductsPage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingProduct ? "Edit Product" : "Add New Product"}
+              {editingProduct ? "Edit Produk" : "Tambah Produk Baru"}
             </DialogTitle>
             <DialogDescription>
               {editingProduct
-                ? "Update the product information below."
-                : "Fill in the details to add a new product."}
+                ? "Perbarui informasi produk di bawah ini."
+                : "Isi detail untuk menambahkan produk baru."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">
-                  Name
+                  Nama
                 </Label>
                 <Input
                   id="name"
@@ -248,7 +304,7 @@ export default function ProductsPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">
-                  Description
+                  Deskripsi
                 </Label>
                 <Textarea
                   id="description"
@@ -262,7 +318,7 @@ export default function ProductsPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="price" className="text-right">
-                  Price
+                  Harga
                 </Label>
                 <Input
                   id="price"
@@ -277,7 +333,7 @@ export default function ProductsPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
-                  Category
+                  Kategori
                 </Label>
                 <Select
                   value={formData.category}
@@ -286,7 +342,7 @@ export default function ProductsPage() {
                   }
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -299,7 +355,7 @@ export default function ProductsPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="image" className="text-right">
-                  Image URL
+                  URL Gambar
                 </Label>
                 <Input
                   id="image"
@@ -324,15 +380,15 @@ export default function ProductsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">Aktif</SelectItem>
+                    <SelectItem value="inactive">Non-aktif</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
               <Button type="submit">
-                {editingProduct ? "Update Product" : "Add Product"}
+                {editingProduct ? "Perbarui Produk" : "Tambah Produk"}
               </Button>
             </DialogFooter>
           </form>
