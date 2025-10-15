@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
+import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,15 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const readFileAsDataURL = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Gagal membaca file gambar"));
+    reader.readAsDataURL(file);
+  });
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,6 +65,9 @@ export default function ProductsPage() {
     image: "",
     status: "active" as "active" | "inactive",
   });
+  const [imageName, setImageName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProducts();
@@ -74,12 +87,15 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const sanitizedPrice = parseFloat(formData.price);
+    const normalizedImage = imageUrl.trim() || formData.image;
+
     const productData: Omit<Product, "id"> = {
       name: formData.name,
       description: formData.description,
-      price: parseFloat(formData.price),
+      price: Number.isNaN(sanitizedPrice) ? 0 : sanitizedPrice,
       category: formData.category,
-      image: formData.image,
+      image: normalizedImage,
       status: formData.status,
       createdAt: editingProduct?.createdAt || new Date(),
       updatedAt: new Date(),
@@ -106,6 +122,11 @@ export default function ProductsPage() {
       image: product.image,
       status: product.status,
     });
+    setImageUrl(product.image?.startsWith("data:") ? "" : product.image);
+    setImageName(
+      product.image?.startsWith("data:") ? "Unggahan sebelumnya" : ""
+    );
+    setImageError(null);
     setIsDialogOpen(true);
   };
 
@@ -125,6 +146,9 @@ export default function ProductsPage() {
       image: "",
       status: "active",
     });
+    setImageName("");
+    setImageUrl("");
+    setImageError(null);
     setEditingProduct(null);
   };
 
@@ -133,7 +157,83 @@ export default function ProductsPage() {
     setIsDialogOpen(true);
   };
 
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const input = event.target;
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("File harus berupa gambar (JPG, PNG, atau WEBP).");
+      input.value = "";
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setImageError("Ukuran file maksimal 2MB.");
+      input.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataURL(file);
+      setFormData((previous) => ({ ...previous, image: dataUrl }));
+      setImageName(file.name);
+      setImageUrl("");
+      setImageError(null);
+    } catch (error) {
+      console.error(error);
+      setImageError("Gagal memuat gambar. Silakan coba lagi.");
+    } finally {
+      input.value = "";
+    }
+  };
+
+  const handleImageUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setImageUrl(value);
+    setFormData((previous) => ({ ...previous, image: value.trim() }));
+    setImageName("");
+    setImageError(null);
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((previous) => ({ ...previous, image: "" }));
+    setImageName("");
+    setImageUrl("");
+    setImageError(null);
+  };
+
   const columns: ColumnDef<Product>[] = [
+    {
+      accessorKey: "image",
+      header: "Gambar",
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => {
+        const image = row.getValue("image") as string | undefined;
+
+        return image ? (
+          <div className="flex h-10 w-10 items-center justify-center">
+            <Image
+              src={image}
+              alt={`Produk ${row.original.name}`}
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-md object-cover"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-neutral-100 text-xs text-neutral-500">
+            N/A
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "name",
       header: ({ column }) => {
@@ -169,7 +269,9 @@ export default function ProductsPage() {
         );
       },
       cell: ({ row }) => {
-        return <div className="truncate">{row.getValue("category") || "-"}</div>;
+        return (
+          <div className="truncate">{row.getValue("category") || "-"}</div>
+        );
       },
     },
     {
@@ -270,6 +372,13 @@ export default function ProductsPage() {
             data={products}
             searchKey="name"
             searchPlaceholder="Cari produk..."
+            mobileHeaders={{
+              image: "Gambar",
+              name: "Nama Produk",
+              category: "Kategori",
+              price: "Harga",
+              status: "Status",
+            }}
           />
         </CardContent>
       </Card>
@@ -353,18 +462,64 @@ export default function ProductsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="image" className="text-right">
-                  URL Gambar
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="image" className="pt-2 text-right">
+                  Gambar
                 </Label>
-                <Input
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3 space-y-3">
+                  {formData.image ? (
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src={formData.image}
+                        alt={formData.name || "Pratinjau produk"}
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 rounded-md object-cover shadow-sm"
+                        unoptimized
+                      />
+                      <div className="flex flex-col gap-2">
+                        <span className="text-xs text-neutral-500">
+                          {imageName || "Menggunakan URL langsung"}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                        >
+                          Hapus gambar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-neutral-500">
+                      Belum ada gambar yang dipilih.
+                    </p>
+                  )}
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                  <p className="text-xs text-neutral-500">
+                    Format JPG, PNG, atau WEBP dengan ukuran maksimal 2MB.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="image-url" className="text-xs font-medium">
+                      Atau gunakan URL gambar
+                    </Label>
+                    <Input
+                      id="image-url"
+                      placeholder="https://contoh.com/gambar-produk.jpg"
+                      value={imageUrl}
+                      onChange={handleImageUrlChange}
+                    />
+                  </div>
+                  {imageError && (
+                    <p className="text-xs text-rose-600">{imageError}</p>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">

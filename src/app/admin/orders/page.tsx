@@ -271,13 +271,15 @@ export default function OrdersPage() {
   ];
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
-  const processingCount = orders.filter((o) => o.status === "processing").length;
+  const processingCount = orders.filter(
+    (o) => o.status === "processing"
+  ).length;
   const shippedCount = orders.filter((o) => o.status === "shipped").length;
   const deliveredCount = orders.filter((o) => o.status === "delivered").length;
 
   const totalRevenue = orders
     .filter((o) => o.status === "delivered")
-    .reduce((sum, order) => sum + order.total, 0);
+    .reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -340,7 +342,9 @@ export default function OrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+            <div className="text-2xl font-bold">
+              {formatCurrency(totalRevenue)}
+            </div>
           </CardContent>
         </Card>
       </div>

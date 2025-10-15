@@ -114,6 +114,15 @@ export default function SubmissionsPage() {
       },
     },
     {
+      accessorKey: "trackingCode",
+      header: "Tracking",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-neutral-500">
+          {row.original.trackingCode}
+        </span>
+      ),
+    },
+    {
       accessorKey: "condition",
       header: "Kondisi",
       cell: ({ row }) => {

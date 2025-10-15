@@ -1,84 +1,142 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, Menu } from "lucide-react";
-import { AdminSidebar, SidebarContent } from "@/components/admin/sidebar";
+import { Bell } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { AdminSidebar } from "@/components/admin/sidebar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { DialogTitle } from "@/components/ui/dialog";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const userStr = window.localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // Check if user is authenticated and has admin role
+        if (user.isAuthenticated && user.role === "admin") {
+          setIsAuthenticated(true);
+        } else {
+          // Not admin, redirect to login
+          router.push("/login");
+        }
+      } catch {
+        // Invalid user data, redirect to login
+        router.push("/login");
+      }
+    } else {
+      // No user data, redirect to login
+      router.push("/login");
+    }
+    setAuthChecked(true);
+  }, [router]);
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("user");
+    }
+
+    setIsAuthenticated(false);
+    router.push("/login");
+  };
+
+  const breadcrumbs = useMemo(() => {
+    const segments = pathname.split("/").filter(Boolean).slice(0, 4);
+
+    const labelMap: Record<string, string> = {
+      admin: "Dashboard",
+      products: "Produk",
+      categories: "Kategori",
+      submissions: "Pengajuan",
+      orders: "Pesanan",
+    };
+
+    const hrefSegments: string[] = [];
+
+    return segments.map((segment) => {
+      hrefSegments.push(segment);
+      return {
+        label: labelMap[segment] ?? segment,
+        href: `/${hrefSegments.join("/")}`,
+      };
+    });
+  }, [pathname]);
+
+  if (!authChecked || !isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
-        <AdminSidebar />
-
-        <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/60 md:h-20 md:px-6">
-            <div className="flex items-center gap-3">
-              {/* Mobile Menu Button */}
-              <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="lg:hidden"
-                    aria-label="Toggle menu"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-0">
-                  <VisuallyHidden>
-                    <DialogTitle>Navigation Menu</DialogTitle>
-                  </VisuallyHidden>
-                  <SidebarContent onNavigate={() => setOpen(false)} />
-                </SheetContent>
-              </Sheet>
-
-              <div className="hidden md:block">
-                <h1 className="text-lg font-semibold md:text-xl">
-                  BekasBerkah Control Center
-                </h1>
-                <p className="hidden text-sm text-neutral-500 dark:text-neutral-400 lg:block">
-                  Kelola inventori, pengajuan, dan pesanan secara terpusat.
-                </p>
-              </div>
-
-              {/* Mobile Title */}
-              <div className="md:hidden">
-                <h1 className="text-base font-semibold">Admin Panel</h1>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 md:h-10 md:w-10"
+    <SidebarProvider>
+      <AdminSidebar onLogout={handleLogout} />
+      <SidebarInset>
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b bg-white/80 backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 dark:bg-neutral-900/80">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <nav
+              aria-label="Breadcrumb"
+              className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400"
+            >
+              <Link
+                href="/admin"
+                className="transition hover:text-neutral-800 dark:hover:text-neutral-100"
               >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1 top-1 size-2 rounded-full bg-emerald-500" />
-              </Button>
-              <Button asChild className="hidden sm:inline-flex">
-                <Link href="/">Lihat Etalase</Link>
-              </Button>
-            </div>
-          </header>
+                Admin
+              </Link>
+              {breadcrumbs.map(({ href, label }, index) => (
+                <div key={href} className="flex items-center gap-2">
+                  <span className="text-xs">/</span>
+                  {index === breadcrumbs.length - 1 ? (
+                    <span className="font-medium text-neutral-700 dark:text-neutral-200">
+                      {label}
+                    </span>
+                  ) : (
+                    <Link
+                      href={href}
+                      className="transition hover:text-neutral-800 dark:hover:text-neutral-100"
+                    >
+                      {label}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </nav>
+          </div>
 
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-            <div className="mx-auto w-full max-w-7xl space-y-6 md:space-y-8">
-              {children}
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
+          <div className="ml-auto flex items-center gap-2 px-4">
+            <Button variant="outline" size="icon" className="relative h-8 w-8">
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-emerald-500" />
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/">Lihat Etalase</Link>
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="mx-auto w-full max-w-7xl space-y-6 pt-6">
+            {children}
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

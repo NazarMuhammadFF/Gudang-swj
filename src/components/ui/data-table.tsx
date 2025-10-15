@@ -37,6 +37,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  mobileHeaders?: Record<string, string>; // Custom headers for mobile view
 }
 
 export function DataTable<TData, TValue>({
@@ -44,6 +45,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = "Cari...",
+  mobileHeaders = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -78,7 +80,9 @@ export function DataTable<TData, TValue>({
         {searchKey && (
           <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
+            value={
+              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+            }
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
             }
@@ -112,8 +116,10 @@ export function DataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
-        <Table>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <Table wrapperClassName="rounded-md border" className="min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -162,6 +168,65 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <div
+              key={row.id}
+              className="rounded-lg border bg-card p-4 space-y-3 shadow-sm"
+            >
+              {row.getVisibleCells().map((cell) => {
+                const columnDef = cell.column.columnDef;
+                const header = columnDef.header;
+
+                // Skip rendering if it's an actions column (usually has id "actions")
+                if (cell.column.id === "actions") {
+                  return (
+                    <div key={cell.id} className="flex justify-end pt-2">
+                      {flexRender(columnDef.cell, cell.getContext())}
+                    </div>
+                  );
+                }
+
+                // Get header label
+                let headerLabel =
+                  mobileHeaders[cell.column.id] || cell.column.id;
+                if (!mobileHeaders[cell.column.id]) {
+                  if (typeof header === "string") {
+                    headerLabel = header;
+                  } else if (typeof header === "function") {
+                    // For function headers, capitalize the column id
+                    headerLabel =
+                      cell.column.id.charAt(0).toUpperCase() +
+                      cell.column.id.slice(1);
+                  }
+                }
+
+                return (
+                  <div
+                    key={cell.id}
+                    className="flex justify-between items-start gap-2"
+                  >
+                    <div className="text-sm font-medium text-muted-foreground min-w-[100px]">
+                      {headerLabel}
+                    </div>
+                    <div className="text-sm text-right flex-1">
+                      {flexRender(columnDef.cell, cell.getContext())}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        ) : (
+          <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">
+            Tidak ada data.
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} baris data

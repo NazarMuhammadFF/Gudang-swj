@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { db, Product, Category, Submission, Order } from "@/lib/database";
+import { seedDatabase, clearDatabase, resetDatabase } from "@/lib/seed-data";
 
 type DashboardStats = {
   totalProducts: number;
@@ -71,6 +72,7 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
@@ -95,7 +97,8 @@ export default function AdminDashboard() {
     ).length;
 
     const totalOrderValue = orderList.reduce(
-      (accumulator, current) => accumulator + current.total,
+      (accumulator, current) =>
+        accumulator + (current.totalAmount || current.total || 0),
       0
     );
 
@@ -118,6 +121,81 @@ export default function AdminDashboard() {
     void loadDashboardData();
   }, [loadDashboardData]);
 
+  const handleSeedDatabase = async () => {
+    if (
+      !confirm(
+        "Apakah Anda yakin ingin mengisi database dengan data dummy? Ini akan menambahkan banyak produk, kategori, pengajuan, dan pesanan."
+      )
+    ) {
+      return;
+    }
+
+    setIsSeeding(true);
+    const result = await seedDatabase();
+    setIsSeeding(false);
+
+    if (result.success) {
+      alert(
+        `✅ Database berhasil diisi!\n\nData yang ditambahkan:\n- ${
+          result.counts?.categories ?? 0
+        } Kategori\n- ${result.counts?.products ?? 0} Produk\n- ${
+          result.counts?.submissions ?? 0
+        } Pengajuan\n- ${result.counts?.orders ?? 0} Pesanan`
+      );
+      await loadDashboardData();
+    } else {
+      alert(`❌ Gagal mengisi database: ${result.message}`);
+    }
+  };
+
+  const handleClearDatabase = async () => {
+    if (
+      !confirm(
+        "⚠️ PERHATIAN: Ini akan menghapus SEMUA data dari database!\n\nApakah Anda yakin ingin melanjutkan?"
+      )
+    ) {
+      return;
+    }
+
+    setIsSeeding(true);
+    const result = await clearDatabase();
+    setIsSeeding(false);
+
+    if (result.success) {
+      alert("✅ Database berhasil dikosongkan!");
+      await loadDashboardData();
+    } else {
+      alert(`❌ Gagal mengosongkan database: ${result.message}`);
+    }
+  };
+
+  const handleResetDatabase = async () => {
+    if (
+      !confirm(
+        "⚠️ PERHATIAN: Ini akan menghapus semua data dan mengisi ulang dengan data dummy!\n\nApakah Anda yakin ingin melanjutkan?"
+      )
+    ) {
+      return;
+    }
+
+    setIsSeeding(true);
+    const result = await resetDatabase();
+    setIsSeeding(false);
+
+    if (result.success) {
+      alert(
+        `✅ Database berhasil direset!\n\nData baru:\n- ${
+          result.counts?.categories ?? 0
+        } Kategori\n- ${result.counts?.products ?? 0} Produk\n- ${
+          result.counts?.submissions ?? 0
+        } Pengajuan\n- ${result.counts?.orders ?? 0} Pesanan`
+      );
+      await loadDashboardData();
+    } else {
+      alert(`❌ Gagal mereset database: ${result.message}`);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -130,16 +208,37 @@ export default function AdminDashboard() {
             pesanan.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => void loadDashboardData()}
-            disabled={isLoading}
+            disabled={isLoading || isSeeding}
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             {isLoading ? "Memuat..." : "Segarkan"}
           </Button>
-          <Button asChild>
+          <Button
+            variant="outline"
+            onClick={() => void handleSeedDatabase()}
+            disabled={isSeeding || isLoading}
+          >
+            {isSeeding ? "Memproses..." : "Isi Data Dummy"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void handleResetDatabase()}
+            disabled={isSeeding || isLoading}
+          >
+            {isSeeding ? "Memproses..." : "Reset Database"}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => void handleClearDatabase()}
+            disabled={isSeeding || isLoading}
+          >
+            {isSeeding ? "Memproses..." : "Hapus Semua Data"}
+          </Button>
+          <Button asChild disabled={isSeeding || isLoading}>
             <Link href="/admin/products">
               <ArrowUpRight className="mr-2 h-4 w-4" />
               Tambah Produk
@@ -410,7 +509,7 @@ export default function AdminDashboard() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(order.total)}
+                        {formatCurrency(order.totalAmount || order.total || 0)}
                       </TableCell>
                     </TableRow>
                   ))}

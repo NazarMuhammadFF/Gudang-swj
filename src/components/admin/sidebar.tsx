@@ -8,120 +8,181 @@ import {
   Shapes,
   Inbox,
   ShoppingCart,
+  ChevronUp,
+  User2,
+  LogOut,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 
-export const navigation = [
+const navigation = [
   {
-    label: "Overview",
-    href: "/admin",
+    title: "Dashboard",
+    url: "/admin",
     icon: LayoutDashboard,
   },
   {
-    label: "Products",
-    href: "/admin/products",
+    title: "Produk",
+    url: "/admin/products",
     icon: Package,
   },
   {
-    label: "Categories",
-    href: "/admin/categories",
+    title: "Kategori",
+    url: "/admin/categories",
     icon: Shapes,
   },
   {
-    label: "Submissions",
-    href: "/admin/submissions",
+    title: "Pengajuan",
+    url: "/admin/submissions",
     icon: Inbox,
   },
   {
-    label: "Orders",
-    href: "/admin/orders",
+    title: "Pesanan",
+    url: "/admin/orders",
     icon: ShoppingCart,
   },
 ];
 
-interface SidebarContentProps {
-  onNavigate?: () => void;
+interface AdminSidebarProps {
+  onLogout?: () => void;
 }
 
-export function SidebarContent({ onNavigate }: SidebarContentProps) {
+export function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <>
-      <div className="flex h-20 items-center gap-3 px-6">
-        <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
-          <span className="text-lg font-bold">BB</span>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <p className="truncate text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            BekasBerkah Admin
-          </p>
-          <p className="truncate text-sm text-neutral-500">
-            Curated marketplace
-          </p>
-        </div>
-      </div>
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/admin">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                  <span className="text-sm font-bold">BB</span>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">
+                    BekasBerkah Admin
+                  </span>
+                  <span className="truncate text-xs">
+                    Panel pengelola internal
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      <Separator className="mx-6" />
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Manajemen</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigation.map((item) => {
+                const isActive =
+                  pathname === item.url ||
+                  (item.url !== "/admin" &&
+                    pathname.startsWith(`${item.url}/`));
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                "hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30",
-                isActive
-                  ? "bg-emerald-600 text-white hover:bg-emerald-600 hover:text-white"
-                  : "text-neutral-600 dark:text-neutral-300"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "h-4 w-4",
-                  isActive ? "text-white" : "text-neutral-400"
-                )}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <Separator className="mx-6" />
-
-      <div className="flex items-center gap-3 px-6 py-4">
-        <Avatar className="h-10 w-10">
-          <AvatarFallback className="bg-emerald-600 text-white">
-            AD
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 overflow-hidden">
-          <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-            Admin Demo
-          </p>
-          <p className="truncate text-xs text-neutral-500">
-            admin@bekasberkah.app
-          </p>
-        </div>
-      </div>
-    </>
-  );
-}
-
-export function AdminSidebar() {
-  return (
-    <aside className="hidden border-r bg-white/95 backdrop-blur dark:bg-neutral-900/80 lg:flex lg:w-72 lg:flex-col">
-      <SidebarContent />
-    </aside>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-emerald-600 text-white">
+                      AD
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      Administrator
+                    </span>
+                    <span className="truncate text-xs">
+                      Mengelola BekasBerkah
+                    </span>
+                  </div>
+                  <ChevronUp className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <div className="flex gap-3 px-2 py-1.5">
+                  <div className="rounded-md bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <User2 className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                      Mode Administrator
+                    </p>
+                    <p className="text-neutral-600 dark:text-neutral-400">
+                      Panel pengelola internal untuk mengatur katalog, kurasi
+                      pengajuan, dan pesanan.
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Admin tidak melakukan transaksi seperti pengguna biasa.
+                    Untuk berbelanja, silakan logout dan login sebagai user.
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span className="text-rose-600 dark:text-rose-400">
+                    Keluar
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
