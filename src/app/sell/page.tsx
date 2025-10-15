@@ -60,7 +60,7 @@ const formSchema = z.object({
   category: z.string().min(1, "Pilih kategori"),
   condition: z.enum(["excellent", "good", "fair"]),
   askingPrice: z
-    .coerce.number({ invalid_type_error: "Masukkan angka yang valid" })
+    .number()
     .min(100000, "Minimal Rp100.000"),
   productPhotos: z.array(z.string()).min(1, "Unggah minimal 1 foto"),
   agreeTerms: z.boolean().refine(Boolean, "Setujui syarat & ketentuan"),
